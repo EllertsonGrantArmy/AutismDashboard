@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   xmlns:components="components.*" 
+			   minWidth="955" minHeight="600"
+			   creationComplete="onCreate(event)" xmlns:local="*"
+			   >
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		@namespace components "components.*";
+		.sectionTitle {
+			fontSize: 20px;
+		}
+	</fx:Style>
+	<fx:Script>
+		<![CDATA[
+			import db.DBChild;
+			
+			import mx.events.FlexEvent;
+			import mx.formatters.DateFormatter;
+			
+			import pd.Child;
+			import pd.CustomEvent;
+			import pd.Program;
+			import pd.ProgramItem;
+			import pd.Sitting;
+			
+			import spark.effects.Animate;
+			import spark.effects.animation.MotionPath;
+			import spark.effects.animation.SimpleMotionPath;
+			
+			private var child:Child;
+			
+			protected function onCreate(event:FlexEvent):void
+			{
+				var programItemDB:DBChild = new DBChild();
+				programItemDB.addEventListener(CustomEvent.ON_LOADED, childLoaded);
+				programItemDB.requestChild(1);
+			}
+			
+			protected function childLoaded(event:CustomEvent):void
+			{
+				this.child = (event.data as Child);
+				var c:Child = child;
+				headerBar.text = c.lName + ", " + c.fName;
+				
+				addMasteredTiles();
+				buildFailedTrialsGraph();
+				buildVideoTagTiles();
+			}
+			
+			private function addMasteredTiles():void
+			{
+				var mastered:Vector.<ProgramItem> = child.getMasteredProgramItems();
+				masteredProgramsTilesGroup.removeAllElements();
+				for each (var pi:ProgramItem in mastered) {
+					var tile:MasteredProgramTile = new MasteredProgramTile();
+					tile.program = pi;
+					masteredProgramsTilesGroup.addElement(tile);
+				}
+			}
+			
+			private function buildFailedTrialsGraph():void
+			{
+				var sittings:Vector.<Sitting> = new Vector.<Sitting>();
+				for each (var p:Program in child.programs) {
+					for each(var pi:ProgramItem in p.items) {
+						sittings = sittings.concat(pi.sittings)
+//						for each(var sitting:Sitting in) {
+//							trace(sitting.session.therapist.fName);
+//							sitting.push(sitting.trials);
+//						}
+					}
+				}
+				var format:DateFormatter = new DateFormatter();
+				format.formatString = "YYYY-MM-DD";
+				function dateString(date:Date):String {
+					return format.format(date);
+				}
+				var dict:Dictionary = new Dictionary();
+				for each (var sitting:Sitting in sittings) {
+					var key:String = dateString(sitting.time);
+					if(dict[key] == null) {
+						trace(key);						
+						dict[key] = [];
+					}
+					else trace("-");
+					dict[key].push(sitting.trials);
+				}
+			}
+			
+			private function buildVideoTagTiles():void
+			{
+				
+			}
+			
+			protected function failedtrialsgraph_click(event:MouseEvent):void
+			{
+				if(!failedTrialsGraph.expanded)
+				{
+					failedTrialsGraph.expanded = true;
+					var _width:int = failedTrialsGraph.width;
+					var _height:int = failedTrialsGraph.height;
+					var _point:Point = failedTrialsGraph.localToGlobal(new Point(0,0));
+					this.addElement(failedTrialsGraph);
+					failedTrialsGraph.width = _width;
+					failedTrialsGraph.height = _height;
+					failedTrialsGraph.x = _point.x;
+					failedTrialsGraph.y = _point.y;
+					var anim1:Animate = new Animate(overlay);
+					anim1.duration=500;
+					anim1.motionPaths = new Vector.<MotionPath>;
+					anim1.motionPaths.push(new SimpleMotionPath("alpha", 0, .5));
+					var anim2:Animate = new Animate(failedTrialsGraph);
+					anim2.duration=500;
+					anim2.motionPaths = new Vector.<MotionPath>();
+					anim2.motionPaths.push(new SimpleMotionPath("y", _point.y, 30));
+					anim2.motionPaths.push(new SimpleMotionPath("height", _height, height - 90));
+					anim1.play();
+					anim2.play();
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<components:HeaderBar id="headerBar" top="0" left="0" right="0" />
+	<s:VGroup top="60" left="0" right="0" bottom="10">
+		<s:HGroup paddingLeft="16" verticalAlign="bottom">
+			<s:Label styleName="sectionTitle" text="Video Tags"/>
+			<s:Label styleName="sectionSubTitle" text="Click to Expand"/>			
+		</s:HGroup>
+		<s:Scroller width="100%" height="100%">
+			<s:HGroup height="100%" id="videoTagGraphsGroup">
+				<components:SmallVideoTagGraphTile />
+				<components:SmallVideoTagGraphTile />
+				<components:SmallVideoTagGraphTile />
+				<components:SmallVideoTagGraphTile />
+				<components:SmallVideoTagGraphTile />
+				<components:SmallVideoTagGraphTile />
+				<components:SmallVideoTagGraphTile />
+			</s:HGroup>
+		</s:Scroller>
+		<s:Label styleName="sectionTitle" paddingLeft="16" text="Failed Trials"/>
+		<s:Group id="failedTrailsGraphHolder" width="100%" height="100%">
+			<local:FailedTrialsGraph id="failedTrialsGraph" width="100%" height="100%" 
+															 paddingLeft="16" paddingRight="16" 
+															 click="failedtrialsgraph_click(event)" />
+		</s:Group>
+		<s:Label styleName="sectionTitle" paddingLeft="16" text="Mastered Programs"/>
+		<s:Scroller width="100%" height="160">
+			<s:HGroup height="100%" id="masteredProgramsTilesGroup">
+				<components:MasteredProgramTile />
+			</s:HGroup>
+		</s:Scroller>
+	</s:VGroup>
+	<s:Rect id="overlay" width="100%" height="100%" alpha="0">
+		<s:fill>
+			<s:SolidColor color="0x000000" />
+		</s:fill>
+	</s:Rect>
+</s:Application>

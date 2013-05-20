@@ -1,0 +1,21 @@
+/* CSS file */
+@namespace s "library://ns.adobe.com/flex/spark";
+
+.topLink
+{
+	color: #7a7a7a;
+	fontSize: 21pt;
+	paddingBottom: 8;
+}
+
+.h1
+{
+	fontWeight: bold;
+	fontSize: 34pt;
+}
+
+.detailsText
+{
+	color: #555555;
+	fontSize: 21px;
+}

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark">
+	<fx:Script>
+		<![CDATA[
+			import mx.graphics.IFill;
+			import mx.graphics.IStroke;
+			import mx.graphics.SolidColorStroke;
+			
+			[Bindable]private var _fillHolder:IFill;
+			[Bindable]private var _fill:SolidColorStroke;
+			
+			[Bindable]public var radiusX:Number = 0;
+			[Bindable]public var radiusY:Number;
+			[Bindable]public var topLeftRadiusX:Number;
+			[Bindable]public var topLeftRadiusY:Number;
+			[Bindable]public var topRightRadiusX:Number;
+			[Bindable]public var topRightRadiusY:Number;
+			[Bindable]public var bottomLeftRadiusX:Number;
+			[Bindable]public var bottomLeftRadiusY:Number;
+			[Bindable]public var bottomRightRadiusX:Number;
+			[Bindable]public var bottomRightRadiusY:Number;
+			
+			[Bindable]public var extraTopBorder:Number = 0;
+			[Bindable]public var extraBottomBorder:Number = 0;
+			[Bindable]public var extraLeftBorder:Number = 0;
+			[Bindable]public var extraRightBorder:Number = 0;
+			
+			public function set fill(value:IFill):void
+			{
+				_fillHolder = value;
+			}
+			
+			public function get fill():IFill
+			{
+				return _fillHolder;
+			}
+			
+			public function set stroke(value:SolidColorStroke):void
+			{
+				_fill = value;
+				invalidateDisplayList();
+			}
+			
+			public function get stroke():SolidColorStroke
+			{
+				return _fill;
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Rect id="strokeRect" 
+			top="{0}" right="{0}" bottom="{0}" left="{0}"
+			radiusX="{this.radiusX}" radiusY="{this.radiusY}" 
+			topLeftRadiusX="{this.topLeftRadiusX}" topLeftRadiusY="{this.topLeftRadiusY}"
+			topRightRadiusX="{this.topRightRadiusX}" topRightRadiusY="{this.topRightRadiusY}"
+			bottomLeftRadiusX="{this.bottomLeftRadiusX}" bottomLeftRadiusY="{this.bottomLeftRadiusY}"
+			bottomRightRadiusX="{this.bottomRightRadiusX}" bottomRightRadiusY="{this.bottomRightRadiusY}">
+		<s:fill>
+			<s:SolidColor color="{_fill.color}"/>
+		</s:fill>
+	</s:Rect>
+	<s:Rect id="fillRect" 
+			top="{_fill.weight + extraTopBorder}" right="{_fill.weight + extraRightBorder}" 
+			bottom="{_fill.weight + extraBottomBorder}" left="{_fill.weight + extraLeftBorder}"
+			radiusX="{this.radiusX - _fill.weight}" radiusY="{this.radiusY - _fill.weight}" 
+			topLeftRadiusX="{this.topLeftRadiusX - _fill.weight}" topLeftRadiusY="{this.topLeftRadiusY - _fill.weight}"
+			topRightRadiusX="{this.topRightRadiusX - _fill.weight}" topRightRadiusY="{this.topRightRadiusY - _fill.weight}"
+			bottomLeftRadiusX="{this.bottomLeftRadiusX - _fill.weight}" bottomLeftRadiusY="{this.bottomLeftRadiusY - _fill.weight}"
+			bottomRightRadiusX="{this.bottomRightRadiusX - _fill.weight}" bottomRightRadiusY="{this.bottomRightRadiusY - _fill.weight}"
+			fill="{_fillHolder}"/>
+</s:Group>

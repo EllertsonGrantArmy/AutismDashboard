@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!---
+(10/28/11) This component has been degradated due unuse.
+-->
+<s:SkinnableContainer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					  xmlns:s="library://ns.adobe.com/flex/spark"
+					  creationComplete="init()"
+					  width="100%"
+					  backgroundAlpha="0"
+					  skinClass="skins.TrailRowSkin">
+	<fx:Script>
+		<![CDATA[
+			import com.greensock.TweenLite;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			import spark.components.Button;
+			import spark.components.TextInput;
+			import spark.components.VGroup;
+			
+			[Bindable]private var DEFAULT_HEIGHT:uint = 45;
+			
+			private const TYPE_ARRAY:Array = 
+				[{label:"Individual", data:Trial.INDIVIDUAL},
+				{label:"Timer", data:Trial.TIMER}];
+			
+			private function init():void
+			{
+
+			}
+			
+			protected function expandButtonClick1(event:MouseEvent):void
+			{	
+				var _vG1:VGroup = new VGroup();
+				var _titleLabel:Label = new Label();
+				_titleLabel.text = "Title";
+				_vG1.addElement(_titleLabel);
+				_vG1.addElement(titleInput);
+				
+				var _vG2:VGroup = new VGroup();
+				var _typeLabel:Label = new Label();
+				_typeLabel.text = "Type";
+				_vG2.addElement(_typeLabel);
+				_vG2.addElement(typeCombo);
+				
+				var _btn:Button = new Button;
+				_btn.label = "Add Target";
+				
+				formGroup.addElement(_vG1);
+				formGroup.addElement(_vG2);
+				formGroup.addElement(_btn);
+				
+				addElement(formGroup);
+				formGroup.addEventListener(FlexEvent.CREATION_COMPLETE, expandButtonClick);
+			}
+			
+			protected function expandButtonClick(e:Event):void
+			{
+				trace(expandButton.visible);
+				if(!expandButton.visible)
+					contractForm();
+				else
+					expandForm();
+			}
+			
+			protected function addTargetClick(event:MouseEvent):void
+			{
+				contractForm();
+			}
+			
+			public function expandForm():void
+			{
+				var _hG:HGroup = formGroup;
+				
+				expandButton.visible = false;
+				expandedArrow.visible = true;
+				
+//				trace(_hG.height)
+				var _height:Number = 1;
+				for(var i:uint; i < _hG.numElements; i++)
+				{
+					//var object:UIComponent = _hG.getElementAt(i);
+					//trace(i + ".height == " + object.height);
+					if(_hG.getElementAt(i).height > _height)
+						_height = _hG.getElementAt(i).height
+				}
+				TweenLite.to(_hG, .3, {height: _height + _hG.paddingBottom});
+			}
+			
+			public function contractForm():void
+			{
+				expandButton.visible = true;
+				expandedArrow.visible = false;
+				
+				TweenLite.to(formGroup, .3, {height: 0});
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:HGroup verticalAlign="middle" paddingLeft="15" paddingRight="30" gap="10" height="{DEFAULT_HEIGHT}" 
+			  click="expandButtonClick(event)">
+		<s:Group>
+			<s:BitmapImage id="expandButton" source="{R.plusIcon}"/>
+			<s:BitmapImage id="expandedArrow" source="{R.arrowExpanded}" visible="false"
+						   top="10" left="6"/>
+		</s:Group>	
+		<s:Label text="Add New Target"/>
+	</s:HGroup>
+	<s:HGroup id="formGroup" verticalAlign="top" gap="10"
+			  paddingRight="15" paddingBottom="5" paddingLeft="15"
+			  clipAndEnableScrolling="true"
+			  top="{DEFAULT_HEIGHT - 5}"
+			  height=".1">
+		<s:VGroup>
+			<s:Label text="Title"/>
+			<s:TextInput id="titleInput"/>
+		</s:VGroup>
+		<s:VGroup>
+			<s:Label text="Type"/>
+			<s:DropDownList id="typeCombo" dataProvider="{new ArrayCollection(TYPE_ARRAY)}"/>
+		</s:VGroup>
+		<s:Button label="Add Target" click="addTargetClick(event)"/>
+	</s:HGroup>
+</s:SkinnableContainer>

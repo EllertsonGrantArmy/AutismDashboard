@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SkinnableContainer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="160" height="100%"
+		 backgroundColor="{R.tile_color}">
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		.title {
+			fontSize: 26px;
+		}
+		
+		.date {
+			color: #7A7A7A;
+			textAlign: right;
+		}
+	</fx:Style>
+	<fx:Script>
+		<![CDATA[
+			import pd.ProgramItem;
+			
+			[Bindable]
+			public var program:ProgramItem = null;
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter" formatString="M/D/YYYY"/>
+	</fx:Declarations>
+	<s:Label top="10" bottom="25" left="10" right="10" text="{program.prompt}" styleName="title"/>
+	<s:Label bottom="10" left="10" right="10" text="{dateFormatter.format(program.dateMastered)}" styleName="date"/>
+</s:SkinnableContainer>

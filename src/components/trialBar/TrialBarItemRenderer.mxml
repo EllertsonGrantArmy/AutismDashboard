@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark"
+				height="100%"
+				autoDrawBackground="false">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			[Bindable]private var isPlus:Boolean;
+			[Bindable]private var newSitting:Boolean;
+			
+			override public function set data(value:Object):void
+			{
+				super.data = value;
+				
+				isPlus = (value.charAt(0) == 1);
+				newSitting = (value.charAt(1) == 1);
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>	
+	
+	<s:Line id="sepLine" yFrom="0" yTo="1" height="75%" verticalCenter="0">
+		<s:stroke>
+			<s:SolidColorStroke id="lineStroke" weight="{(newSitting) ? 2 : 1}"
+								color="{(newSitting) ? 0x000000 : R.borderColor}"/>
+		</s:stroke>
+	</s:Line>
+	
+	<s:BitmapImage visible="{isPlus}" id="plusIcon" source="{R.grayPlusIcon}" top="0" left="8" right="8"/>
+	<s:BitmapImage visible="{!isPlus}" id="minusIcon" source="{R.grayMinusIcon}" bottom="0" left="8" right="8"/>
+	
+	<s:Label />
+</s:ItemRenderer>

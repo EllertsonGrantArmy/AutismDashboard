@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:List xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		itemRenderer="components.trialBar.TrialBarItemRenderer"
+		contentBackgroundAlpha="0"
+		width="100%"
+		verticalScrollPolicy="off"
+		initialize="init()">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			
+			import spark.core.NavigationUnit;
+			[Bindable]
+			public var dataArray:ArrayCollection = new ArrayCollection();
+			
+			private function init():void
+			{
+				this.dataProvider = dataArray;
+			}
+			
+			public function addTrialBarItem(isPlus:Boolean, beginSitting:Boolean):void
+			{	
+				var string:String = "";
+				
+				string += (isPlus) ? "1" : "0";				
+				string += (beginSitting) ? 1 : 0;
+				string += dataProvider.length.toString();			
+				
+				dataProvider.addItem(string);
+				// Scroll to end of list
+				this.layout.horizontalScrollPosition += layout.getHorizontalScrollPositionDelta(NavigationUnit.END);
+			}
+			
+			public function clear():void
+			{
+				dataProvider = new ArrayCollection();
+			}
+		]]>
+	</fx:Script>
+	
+	<s:layout>
+		<s:HorizontalLayout gap="0" />
+	</s:layout>
+</s:List>

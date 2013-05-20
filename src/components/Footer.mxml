@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:HGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  bottom="0" right="0" left="0"
+		  horizontalAlign="right" verticalAlign="bottom"
+		  paddingBottom="10" paddingRight="10"
+		  gap="7">
+	<fx:Metadata>
+		[Event(name="settingsClick", type="flash.events.Event")]
+		[Event(name="leftArrowClick", type="flash.events.Event")]
+		[Event(name="rightArrowClick", type="flash.events.Event")]
+	</fx:Metadata>
+	<fx:Script>
+		<![CDATA[
+			protected function settingsClick(event:MouseEvent):void
+			{
+				dispatchEvent(new Event("settingsClick"));
+			}
+			
+			protected function leftArrowClick(event:MouseEvent):void
+			{
+				dispatchEvent(new Event("leftArrowClick"));				
+			}
+			
+			protected function rightArrowClick(event:MouseEvent):void
+			{
+				dispatchEvent(new Event("rightArrowClick"));	
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<!--<s:Image source="{R.wrench}" click="settingsClick(event)"/>-->
+	<s:Image id="leftArrowButton" source="{R.leftArrowInactive}" click="leftArrowClick(event)"/>
+	<s:Image id="rightArrowButton" source="{R.rightArrowInactive}" click="rightArrowClick(event)"/>
+</s:HGroup>

@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!---
+<p>This component will show either a list of 
+programs or the trail view.</p>
+<p>The properties <code>program</code> must 
+be set in order to get out of "start" state.</p>
+-->
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:Components="Components.*" 
+		 xmlns:components="components.*" 
+		 xmlns:trialBar="components.trialBar.*"
+		 creationComplete="init(event)">
+	
+	<fx:Style source="style/default.css"/>
+	
+	<fx:Script>
+		<![CDATA[
+			import components.trialBar.TrialEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			import mx.formatters.DateFormatter;
+			
+			import pd.Program;
+			import pd.ProgramItem;
+			import pd.Session;
+			import pd.Undo.DataChange;
+			import pd.Undo.DataChangeEvent;
+			import pd.Undo.Undoable;
+			
+			import spark.events.IndexChangeEvent;
+			
+			[Bindable]private var boundObjectForArrow:Object;
+			
+			public var topBound:Number = -15;
+			
+			private var creationCompleted:Boolean;
+			protected function init(event:FlexEvent):void
+			{
+				creationCompleted = true;
+				initDisplay();
+			}
+			
+			// Overrode so that the side point is moved to the right spot
+			override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+			{
+				super.updateDisplayList(unscaledWidth, unscaledHeight);
+				
+				if(boundObjectForArrow != null)
+				{
+					var _middleOfBoundObj:Number = boundObjectForArrow.localToGlobal(new Point(0,boundObjectForArrow.height / 2)).y;
+					var value:Number = _middleOfBoundObj - localToGlobal(new Point()).y - rectEnd.height/2;
+				}
+				if(boundObjectForArrow != null && checkBounds(value))
+					rectEnd.y = value;
+				else
+					rectEnd.y = -30;
+				coverRect.y = rectEnd.y;
+			}
+			
+			/** sets the object in the view to point the side pointer to.
+			 * 
+			 * @param target object to be bound to.
+			 */
+			public function bindObject(target:Object):void
+			{
+				boundObjectForArrow = target;
+				invalidateDisplayList();
+			}
+			
+			/** checks if the value is within the bounds of <code>topBound</code>
+			 * and <code>this.height</code>
+			 */
+			private function checkBounds(value:Number):Boolean
+			{
+				return (value > topBound && (value + rectEnd.height) < height);
+			}
+			
+			protected function toItemsListLabel_clickHandler(event:MouseEvent):void
+			{
+				this.currentState = "programItemsList";
+				programItemsList.selectedItem = selectedItem;
+			}
+			
+			protected function toCurrentItemLabel_clickHandler(event:MouseEvent):void
+			{
+				this.currentState = "acquisitionTrial";
+			}
+
+			private var _program:Program;
+			/**
+			 * The <code>program</code> value contains all the information about
+			 * the currently selected program. Assign to redraw.
+			 */
+			public function get program():Program
+			{
+				return _program;
+			}
+			public function set program(value:Program):void
+			{
+				_program = value;
+				initDisplay();
+			}
+			
+			private var _session:Session;
+			[Bindable]
+			/** value of the current session */
+			public function get session():Session
+			{
+				return _session;
+			}
+			public function set session(value:Session):void
+			{
+				_session = value;
+			}
+
+			private var _selectedItem:ProgramItem;
+			[Bindable]
+			/** selected <code>ProgramItem</code> */
+			public function get selectedItem():ProgramItem
+			{
+				return _selectedItem;
+			}
+			/** */
+			public function set selectedItem(value:ProgramItem):void
+			{
+				_selectedItem = value;
+				_selectedItem.addEventListener(ProgramItem.STAGE_CHANGE, itemStageChange);
+				_selectedItem.addEventListener(ProgramItem.CUR_STAGE_PROGRESS_CHANGE, trialResponse);
+			}
+
+			[Bindable]private var trialItemsArrayCollection:ArrayCollection;
+			[Bindable]private var reviewItemsArrayCollection:ArrayCollection;
+
+			private function initDisplay():void
+			{
+				if(creationCompleted)
+				{
+					if(_program != null)
+					{
+						if(_program.sittingsUntilReview <= 0)
+						{
+							this.currentState = "acquisitionReview";
+							reviewItemsArrayCollection = _program.getReviewItemsArrayCollection();
+						}
+						else
+						{
+							this.currentState = "acquisitionTrial";
+							
+							trialItemsArrayCollection = new ArrayCollection();
+							for each(var item:ProgramItem in _program.items)
+							{
+								if(item.dateMastered == null)
+									trialItemsArrayCollection.addItem(item);
+							}
+							
+							selectedItem = program.currentItem;
+							if(selectedItem.dateMastered == null)
+								trialBarContainer.unlock();
+							else
+								trialBarContainer.lock();
+							
+							redrawProgressBars();
+						}
+					}
+					else
+					{
+						this.currentState = "start";
+					}
+				}
+			}
+			
+			protected function trialResponse(event:Event):void
+			{
+				// if the trialResponse 
+				if(event.target.isPrototypeOf(ProgramItem) && event.target != selectedItem)
+				{
+					if(program != ProgramItem(event.target).program)
+						_program = ProgramItem(event.target).program;
+					selectedItem = ProgramItem(event.target);
+					trialBarContainer.programItem = selectedItem;
+					initDisplay();
+				}
+				redrawProgressBars();
+			}
+			
+			private function redrawProgressBars():void
+			{
+				if(selectedItem != null)
+				{
+					if(selectedItem.stage == 'mt') 
+					{
+						mtProgressBar.successes = selectedItem.currentStageProgress;
+						dtProgressBar.successes = 0;
+					}
+					else
+					{
+						mtProgressBar.successes = session.child.mtGoal;
+						if(selectedItem.stage == 'dt')
+						{
+							dtProgressBar.successes = selectedItem.currentStageProgress;
+						}
+						else
+						{
+							dtProgressBar.successes = session.child.dtGoal;
+						}
+					}
+					
+					rrProgressBar.successes = (selectedItem.stage == 'rr') 
+						? selectedItem.currentStageProgress + selectedItem.successesBeforeLastFailure
+						: 0;
+				}
+				else
+				{
+					mtProgressBar.successes = 0;
+					dtProgressBar.successes = 0;
+					rrProgressBar.successes = 0;
+				}
+			}
+			
+			protected function programItemsList_changeHandler(event:IndexChangeEvent):void
+			{
+				this.currentState = "acquisitionTrial";
+				selectedItem = programItemsList.selectedItem as ProgramItem;
+				redrawProgressBars();
+			}
+			
+			protected function itemStageChange(event:Event):void
+			{
+				if(event.target == selectedItem)
+				{
+					redrawProgressBars();
+					if(selectedItem.currentStageProgress == 0)
+						trialBarContainer.lock();
+					else
+						trialBarContainer.unlock();
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColorStroke color="{R.darkBorderColor}" weight="2" id="containerBorder"/>
+		<s:SolidColor color="0xffffff" id="containerBckgrndColor"/>
+	</fx:Declarations>
+	
+	<s:states>
+		<s:State name="start"/>
+		<s:State name="acquisitionTrial"/>
+		<s:State name="programItemsList"/>
+		<s:State name="acquisitionReview"/>
+	</s:states>
+	
+	<s:Group id="coverRect" scaleX=".5">
+		<s:Rect width="26" height="26" left="0" rotation="45" stroke="{containerBorder}" fill="{containerBckgrndColor}"/>
+	</s:Group>
+	
+	<s:Group height="100%" right="0" left="6">
+		<s:Rect right="0" y="0" width="100%" height="100%" stroke="{containerBorder}" fill="{containerBckgrndColor}"/>
+	</s:Group>
+	<s:Group id="rectEnd" scaleX="{coverRect.scaleX}">
+		<s:Rect width="25" height="25" left="2"  rotation="45" top="1" fill="{containerBckgrndColor}"/>
+	</s:Group>
+	
+	<!-- Start Contents -->
+	<s:Group left="26" right="2" top="25" bottom="20">
+		
+		<s:VGroup includeIn="start" id="startContents" left="0" right="0"
+				  height="100%" gap="0">
+			<s:Label text="Welcome to the Smart Data App." styleName="h1"/>
+			<s:Label text="Tap a program on the left to start aquisition trials."/>
+		</s:VGroup>
+		
+		<s:VGroup includeIn="acquisitionTrial" id="acquisitionTrialContents" width="100%" gap="10" paddingRight="40">				
+			<s:Label text="&#0060; Items List | Current Item" styleName="topLink"
+					 id="toItemsListLabel" click="toItemsListLabel_clickHandler(event)"/>
+			<s:VGroup gap="0">
+				<s:Label text="{selectedItem.prompt}" id="promptText" styleName="h1"/>
+				<s:Label text="Response: {selectedItem.response}" styleName="h2"/>
+			</s:VGroup>
+			<s:Label text="Date Introduced:    {DateFunctions.toAmericanString(selectedItem.dateIntroduced)}" 
+					 styleName="detailsText"/>
+			<s:BorderContainer borderColor="{R.borderColor}" width="100%">
+				<s:filters>
+					<s:DropShadowFilter alpha=".4" distance="3" blurY="9" angle="90"/>
+				</s:filters>
+				
+				<trialBar:TrialBarContainer height="100%" width="100%" id="trialBarContainer"
+											session="{session}" programItem="{selectedItem}"
+											trialPlus="trialResponse(event)"
+											trialMinus="trialResponse(event)"/>
+			</s:BorderContainer>
+			<components:StageProgressBar width="330" totalTrials="{session.child.mtGoal}"
+										 id="mtProgressBar" label="Mass Trial"/>
+			<s:VGroup paddingLeft="10" height="0">
+				<s:Label text="Days to complete:  3" styleName="detailsText"/>
+				<s:Label text="Date mastered:     8/6/11" styleName="detailsText"/>
+			</s:VGroup>
+			
+			<s:Group id="dtDetails" visible="{!selectedItem.disableDT}">
+				<components:StageProgressBar width="330" totalTrials="{session.child.dtGoal}" 
+											 label="Distractor Trial" id="dtProgressBar"/>
+			</s:Group>
+			<s:Group id="rrDetails" visible="{!selectedItem.disableRR}">
+				<components:StageProgressBar width="330" totalTrials="{session.child.rrGoal}"
+											 id="rrProgressBar" label="Random Rotation"/>
+			</s:Group>
+		</s:VGroup>
+		
+		
+		<s:VGroup includeIn="programItemsList" id="programItemsListContents" left="0" right="0" height="100%" gap="0">
+			<s:Group width="100%">
+				<s:Label text="Items List | Current Item &#0062;" styleName="topLink"
+						 id="toCurrentItemLabel" click="toCurrentItemLabel_clickHandler(event)"/>
+				<s:Group right="5" fontSize="19.5" top="5">
+					<s:Label text="Mastered" right="0"/>
+					<s:Label text="Introduced" right="91"/>
+				</s:Group>
+			</s:Group>
+			<s:List id="programItemsList" contentBackgroundAlpha="0"
+					dataProvider="{trialItemsArrayCollection}"
+					change="programItemsList_changeHandler(event)"
+					itemRenderer="itemRenderer.SelectProgramItem_ItemRenderer"
+					width="100%" height="100%">
+				<s:layout>
+					<s:VerticalLayout gap="-1"/>
+				</s:layout>
+			</s:List>
+		</s:VGroup>
+		
+		
+		<s:Group includeIn="acquisitionReview" id="acquisitionReviewContents" width="100%">
+			<s:Label text="Review"/>
+			<s:List id="reviewItemsList" contentBackgroundAlpha="0"
+					dataProvider="{reviewItemsArrayCollection}"
+					itemRenderer="itemRenderer.ReviewListItemRenderer"
+					width="100%">
+				<s:layout>
+					<s:VerticalLayout gap="-1"/>
+				</s:layout>
+			</s:List>
+		</s:Group>
+		
+		
+	</s:Group>
+	<!-- End Contents -->
+	
+</s:Group>

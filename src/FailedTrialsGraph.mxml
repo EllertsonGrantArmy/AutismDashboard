@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:UIComponent xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx"
+				creationComplete="init(event)"
+				resize="resize(event)">
+	<fx:Script>
+		<![CDATA[
+			import flare.animate.TransitionEvent;
+			import flare.animate.Transitioner;
+			import flare.util.Colors;
+			import flare.util.Shapes;
+			import flare.vis.Visualization;
+			import flare.vis.data.Data;
+			import flare.vis.data.DataSprite;
+			import flare.vis.operator.layout.StackedAreaLayout;
+			
+			private var vis:Visualization;
+			private var labelMask:Shape = new Shape();
+			private var _paddingLeft:int=0;
+			private var _paddingRight:int=0;
+			private var background:Sprite;
+			private static const BACKGROUND_COLOR:uint = 0xFFFFFF;
+			public var expanded:Boolean = false;
+			
+			protected function init(event:Event):void
+			{
+				var dataset:Object = getData(10);
+				
+				// create the visualization
+				vis = new Visualization(dataset.data);
+				vis.bounds = bounds();
+				vis.operators.add(new StackedAreaLayout(dataset.columns));
+				vis.data.nodes.visit(function(d:DataSprite):void {
+					d.fillColor = Colors.hsv(Math.random(), 1,1);
+					d.fillAlpha = 1;
+					d.lineAlpha = 0;
+					d.shape = Shapes.POLYGON;
+				});
+				vis.update();
+				background = new Sprite();
+				background.graphics.beginFill(BACKGROUND_COLOR);
+				background.graphics.drawRect(0,0,1,1);
+				background.graphics.endFill();
+				addChild(background);
+				addChild(vis);
+				
+				// add mask to hide animating labels
+				vis.xyAxes.addChild(labelMask);
+				vis.xyAxes.yAxis.labels.mask = labelMask;
+			}
+			
+			public static function getData(N:int):Object
+			{
+				var cols:Array = [-3,1,3,4,5,6,7,8,9,10];
+				var i:uint, col:int;
+				
+				var data:Data = new Data();
+				for (i=0; i<N; ++i) {
+					var d:DataSprite = data.addNode();
+					var j:uint = 0, s:Number;
+					for each (col in cols) {
+						s = 1 + int((j++)/2);
+						if(i+col%4==0)
+							d.data[col] = 0;
+						else
+							d.data[col] = s*Math.random();
+					}
+				}
+				
+				return { data:data, columns:cols };
+			}
+			
+			private function update(t:Transitioner):void
+			{
+				// toggle screen quality during animation to boost frame rate
+				t.addEventListener(TransitionEvent.START,
+					function(e:Event):void {stage.quality = StageQuality.LOW});
+				t.addEventListener(TransitionEvent.END,
+					function(e:Event):void {stage.quality = StageQuality.HIGH});	
+				vis.update(t).play();
+			}
+			
+			protected function resize(e:Event):void
+			{
+				if(vis) {
+					vis.bounds = bounds();
+					vis.update();
+				}
+				if(background) {
+					background.x = bounds().x;
+					background.y = bounds().y;
+					background.height = bounds().height;
+					background.width = bounds().width;
+				}
+			}
+			
+			private function bounds():Rectangle
+			{
+				return new Rectangle(_paddingLeft,0,this.width-_paddingLeft-_paddingRight,this.height-30);;
+			}
+			
+			public function set paddingLeft(value:int):void 
+			{
+				_paddingLeft = value;
+				if(vis) vis.update();
+			}
+			
+			public function set paddingRight(value:int):void 
+			{
+				_paddingRight = value;
+				if(vis) vis.update();
+			}
+			
+		]]>
+	</fx:Script>
+</mx:UIComponent>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:components="components.*"
+		  >
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			import spark.components.Label;
+			
+			private var _successBarWidth:Number;
+			[Bindable]private var _success:Number = 0;
+			[Bindable]public var label:String = "";
+
+			private var _totalTrials:Number = 1;
+			
+			[Bindable]
+			public function get totalTrials():Number
+			{
+				return _totalTrials;
+			}
+
+			public function set totalTrials(value:Number):void
+			{
+				_totalTrials = value;
+			}
+
+			/**
+			 * 	Sets number of totalSuccesses needed and color of the bar to track it
+			 */
+			public function set successes(value:Number):void
+			{
+				_success = value;
+				
+				if(value == 0)
+				{
+					checkMark.source = R.uncheckIcon;
+					backRect.fill = grayBackGrad;
+					backRect.stroke.color = 0x575757;
+				}
+				else if(_success < _totalTrials)
+				{
+					checkMark.source = R.uncheckIcon;
+					trialsRect.fill = progressSolid;
+					backRect.fill = progressBackFill;
+					backRect.stroke.color = 0x575757;
+				}
+				else
+				{
+					checkMark.source = R.checkIcon;
+					trialsRect.fill = completeGrad;
+					backRect.stroke.color = 0x5e97a6;
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:LinearGradient id="completeGrad">
+			<s:GradientEntry color="0x61d34c"/>
+			<s:GradientEntry color="0x76e861"/>
+		</s:LinearGradient>
+		<s:LinearGradient id="progressGrad">
+			<s:GradientEntry color="0x61d34c"/>
+			<s:GradientEntry color="0x76e861"/>
+		</s:LinearGradient>
+		<s:SolidColor id="progressSolid" color="{R.LIGHT_BLUE}"/>
+		<s:LinearGradient id="grayBackGrad">
+			<s:GradientEntry color="0x868686"/>
+			<s:GradientEntry color="0x929292"/>
+		</s:LinearGradient>
+		<s:SolidColor color="0xa7bdc2" id="progressBackFill"/>
+	</fx:Declarations>
+	
+	<components:RectFixedRoundedStroke id="backRect" width="100%" height="100%" radiusX="0" 
+									   bottomLeftRadiusX="0" bottomRightRadiusX="0"
+									   fill="{grayBackGrad}">
+		<components:stroke>
+			<s:SolidColorStroke color="0x000000" weight="1"/>
+		</components:stroke>	
+	</components:RectFixedRoundedStroke>
+	<components:RectFixedRoundedStroke id="maskRect" top="1" bottom="1" left="1" right="1" radiusX="0" 
+									   bottomLeftRadiusX="0" bottomRightRadiusX="0"/>
+	<components:RectFixedRoundedStroke id="trialsRect" mask="{maskRect}"
+			height="100%" width="{backRect.width * (_success / totalTrials)}" extraRightBorder="1">
+		<components:stroke>
+			<s:SolidColorStroke color="0x348599" weight="1"/>
+		</components:stroke>
+		<components:fill>
+			<s:SolidColor color="{R.LIGHT_BLUE}" id="trialsColor" />
+		</components:fill>
+		
+	</components:RectFixedRoundedStroke>
+	<s:HGroup verticalAlign="middle" height="100%" width="100%" 
+			  paddingTop="5" paddingBottom="3" paddingLeft="11" paddingRight="11">
+		<s:BitmapImage source="{R.uncheckIcon}" id="checkMark"/>
+		<s:Group width="100%">
+			<s:Label text="{label}" left="0"/>
+			<s:Label id="totalTrialsLbl" color="0xFFFFFF" text="{_success}/{totalTrials}" right="0"/>			
+		</s:Group>
+	</s:HGroup>
+</s:Group>

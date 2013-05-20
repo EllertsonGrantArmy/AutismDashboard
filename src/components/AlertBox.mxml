@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SkinnablePopUpContainer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+						   xmlns:s="library://ns.adobe.com/flex/spark" width="250" height="150">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			
+			private var message:String;
+			public function getMessage(msg:String):void
+			{
+				message = msg;
+				msgHolder.text = message;
+				
+			}
+		]]>
+	</fx:Script>
+	<s:TitleWindow x="0" y="0" close="close()">
+		<s:VGroup width="100%" height="118" gap="5" horizontalAlign="center" paddingBottom="8"
+				  paddingLeft="8" paddingRight="8" paddingTop="8">
+			
+	<s:Label x="89" y="41" width="233" fontSize="16" fontWeight="bold" text="Label"
+			 textAlign="center" id="msgHolder"/>
+			<s:Button x="163" y="247" label="Close" click="close()"/>
+		</s:VGroup>
+		
+	</s:TitleWindow>
+	
+	
+</s:SkinnablePopUpContainer>
