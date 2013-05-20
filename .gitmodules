@@ -1,0 +1,3 @@
+[submodule "libs/FlareCharts"]
+	path = libs/FlareCharts
+	url = https://github.com/prefuse/Flare.git
