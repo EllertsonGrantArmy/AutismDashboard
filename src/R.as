@@ -66,6 +66,7 @@ package
 		public static const LIGHT_BLUE:uint = 0x73e3ff;
 		public static const tile_color:uint = LIGHT_BLUE;
 		public static var roEndPoint:String = "http://wdmdsrv1.uwsp.edu/flex2gateway/";
+		public static var roNewEndPoint:String = "http://prenticetech-com.securec53.ezhostingserver.com/flex2gateway/";
 		public static var cfcDir:String = "MobileAutism.AutismTwo.DataEntry.CFC.";
 		
 		// animated gif's

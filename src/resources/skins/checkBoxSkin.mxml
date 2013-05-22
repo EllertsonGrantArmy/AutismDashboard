@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark"
+	alpha.disabledStates="0.5">
+	
+	<fx:Metadata>
+		[HostComponent("spark.components.CheckBox")]
+	</fx:Metadata> 
+	
+	<s:states>
+		<s:State name="up" />
+		<s:State name="over" stateGroups="overStates" />
+		<s:State name="down" stateGroups="downStates" />
+		<s:State name="disabled" stateGroups="disabledStates" />
+		<s:State name="upAndSelected" />
+		<s:State name="overAndSelected" stateGroups="overStates" />
+		<s:State name="downAndSelected" stateGroups="downStates" />
+		<s:State name="disabledAndSelected" stateGroups="disabledStates" />
+	</s:states>
+	
+	<!-- background -->
+	<s:Rect width="100%" height="25">
+		<s:fill>
+			<s:SolidColor color="{R.mediumColor}" />
+		</s:fill>
+	</s:Rect>
+	
+	<!-- arrow -->
+	<s:Path data="M 0 0 L 8 0 L 4 6 L 0 0 Z" top="10" left="3" rotation.up="-90" rotation="-90" rotation.upAndSelected="0" rotation.overAndSelected="0" rotation.downAndSelected="0">
+		<s:fill>
+			<s:SolidColor color="{R.darkColor}" color.over="{R.blackColor}" color.overAndSelected="{R.blackColor}" />
+		</s:fill>
+	</s:Path>
+	
+	<!-- Label -->
+	<s:Label id="labelDisplay"
+			 left="19" top="3"
+			 height="25"
+			 textAlign="start"
+			 fontWeight="bold"
+			 verticalAlign="middle"
+			 maxDisplayedLines="1"/>
+	
+</s:Skin>

@@ -16,16 +16,22 @@
 	</fx:Style>
 	<fx:Script>
 		<![CDATA[
-			import db.DBChild;
+			import db.DBTags;
 			
+			import flare.vis.data.Data;
+			import flare.vis.data.NodeSprite;
+			
+			import mx.events.EffectEvent;
 			import mx.events.FlexEvent;
 			import mx.formatters.DateFormatter;
+			import mx.utils.RpcClassAliasInitializer;
 			
 			import pd.Child;
 			import pd.CustomEvent;
 			import pd.Program;
 			import pd.ProgramItem;
 			import pd.Sitting;
+			import pd.Therapist;
 			
 			import spark.effects.Animate;
 			import spark.effects.animation.MotionPath;
@@ -35,9 +41,11 @@
 			
 			protected function onCreate(event:FlexEvent):void
 			{
-				var programItemDB:DBChild = new DBChild();
-				programItemDB.addEventListener(CustomEvent.ON_LOADED, childLoaded);
-				programItemDB.requestChild(1);
+				RpcClassAliasInitializer.registerClassAliases();
+//				var programItemDB:DBChild = new DBChild();
+//				programItemDB.addEventListener(CustomEvent.ON_LOADED, childLoaded);
+//				programItemDB.requestChild(1);
+				buildVideoTagTiles();
 			}
 			
 			protected function childLoaded(event:CustomEvent):void
@@ -48,7 +56,6 @@
 				
 				addMasteredTiles();
 				buildFailedTrialsGraph();
-				buildVideoTagTiles();
 			}
 			
 			private function addMasteredTiles():void
@@ -65,42 +72,84 @@
 			private function buildFailedTrialsGraph():void
 			{
 				var sittings:Vector.<Sitting> = new Vector.<Sitting>();
+				var therapists:Vector.<Therapist> = new Vector.<Therapist>();
 				for each (var p:Program in child.programs) {
 					for each(var pi:ProgramItem in p.items) {
-						sittings = sittings.concat(pi.sittings)
-//						for each(var sitting:Sitting in) {
-//							trace(sitting.session.therapist.fName);
-//							sitting.push(sitting.trials);
-//						}
+						for each(var sitting:Sitting in pi.sittings) {
+							sittings.push(sitting);
+							if(therapists.indexOf(sitting.session.therapist) == -1)
+								therapists.push(sitting.session.therapist);
+						}
 					}
 				}
+				
 				var format:DateFormatter = new DateFormatter();
 				format.formatString = "YYYY-MM-DD";
 				function dateString(date:Date):String {
-					return format.format(date);
+					var _d = new Date(date.fullYear, date.month, date.date);
+					return _d;
 				}
+				function keySet(dict:Dictionary):Array {
+					var keys:Array = [];
+					for (var key:* in dict) keys.push(key);
+					return keys;
+				}
+				
 				var dict:Dictionary = new Dictionary();
 				for each (var sitting:Sitting in sittings) {
 					var key:String = dateString(sitting.time);
 					if(dict[key] == null) {
-						trace(key);						
 						dict[key] = [];
 					}
-					else trace("-");
-					dict[key].push(sitting.trials);
+					dict[key].push(sitting);
 				}
+				for (var key:* in dict) {
+					trace(dict[key].length);
+				}
+				var days:Array = keySet(dict);
+				days.sort(); 
+				
+				var data:Data = new Data();
+				var cols:Array = [];
+				// each therapist
+				for each (var t:Therapist in therapists) {
+					var tNode:NodeSprite = data.addNode();
+					// each day
+					for(var i:int = 0; i<days.length; i++) {
+						var dayKey:Object = days[i];
+						var dayArray:Array = dict[dayKey];
+						var count:int = 0;
+						// each sitting in day
+						for(var j:int = 0; j<dayArray.length; j++) {
+							sitting  = dayArray[j];
+							if(sitting.session.therapist == t)
+								count += sitting.trials.match(/0/g).length;
+						}
+						tNode.data[dayKey] = count;
+						trace(count);
+					}
+				}
+				for(i=0; i<days.length; i++)
+				{
+					cols.push(i);
+				}
+				failedTrialsGraph.data = data;
+				failedTrialsGraph.columns = days;
+				failedTrialsGraph.markDataUpdated();
 			}
 			
 			private function buildVideoTagTiles():void
 			{
-				
+				var tagsDB:DBTags = new DBTags();
+				tagsDB.addEventListener(CustomEvent.ON_LOADED, tagsLoaded);
+				tagsDB.requestTags();
 			}
 			
 			protected function failedtrialsgraph_click(event:MouseEvent):void
 			{
-				if(!failedTrialsGraph.expanded)
+				if(failedTrialsGraph.expanded == 0)
 				{
-					failedTrialsGraph.expanded = true;
+					failedTrialsGraph.expanded = -1;
 					var _width:int = failedTrialsGraph.width;
 					var _height:int = failedTrialsGraph.height;
 					var _point:Point = failedTrialsGraph.localToGlobal(new Point(0,0));
@@ -120,7 +169,38 @@
 					anim2.motionPaths.push(new SimpleMotionPath("height", _height, height - 90));
 					anim1.play();
 					anim2.play();
+					anim2.addEventListener(EffectEvent.EFFECT_END, function(e:Event) {failedTrialsGraph.expanded = 1;});
 				}
+				else if(failedTrialsGraph.expanded == 1)
+				{
+					failedTrialsGraph.expanded = 0;
+//					var _width:int = failedTrailsGraphHolder.width;
+					var _height:int = failedTrailsGraphHolder.height;
+//					var _point:Point = failedTrialsGraph.localToGlobal(new Point(0,0));
+					failedTrailsGraphHolder.addElement(failedTrialsGraph);
+//					failedTrialsGraph.width = _width;
+					failedTrialsGraph.height = _height;
+					failedTrialsGraph.x = 0;
+//					failedTrialsGraph.y = _point.y;
+					var anim1:Animate = new Animate(overlay);
+					anim1.duration=500;
+					anim1.motionPaths = new Vector.<MotionPath>;
+					anim1.motionPaths.push(new SimpleMotionPath("alpha", .5, 0));
+//					var anim2:Animate = new Animate(failedTrialsGraph);
+//					anim2.duration=500;
+//					anim2.motionPaths = new Vector.<MotionPath>();
+//					anim2.motionPaths.push(new SimpleMotionPath("y", _point.y, 30));
+//					anim2.motionPaths.push(new SimpleMotionPath("height", _height, height - 90));
+					anim1.play();
+//					anim2.play();
+//					anim2.addEventListener(EffectEvent.EFFECT_END, function(e:Event) {failedTrialsGraph.expanded = 1;});
+				}
+			}
+			
+			protected function tagsLoaded(event:Event):void
+			{
+				// TODO Auto-generated method stub
+				
 			}
 			
 		]]>
@@ -148,7 +228,7 @@
 		<s:Label styleName="sectionTitle" paddingLeft="16" text="Failed Trials"/>
 		<s:Group id="failedTrailsGraphHolder" width="100%" height="100%">
 			<local:FailedTrialsGraph id="failedTrialsGraph" width="100%" height="100%" 
-															 paddingLeft="16" paddingRight="16" 
+															 paddingLeft="30" paddingRight="16" 
 															 click="failedtrialsgraph_click(event)" />
 		</s:Group>
 		<s:Label styleName="sectionTitle" paddingLeft="16" text="Mastered Programs"/>
@@ -163,4 +243,7 @@
 			<s:SolidColor color="0x000000" />
 		</s:fill>
 	</s:Rect>
+	<components:Login>
+		
+	</components:Login>
 </s:Application>

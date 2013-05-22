@@ -21,23 +21,17 @@
 			private var _paddingRight:int=0;
 			private var background:Sprite;
 			private static const BACKGROUND_COLOR:uint = 0xFFFFFF;
-			public var expanded:Boolean = false;
+			public var expanded:int = 0;
+			
+			public var data:Data;
+			public var columns:Array;
 			
 			protected function init(event:Event):void
 			{
 				var dataset:Object = getData(10);
 				
 				// create the visualization
-				vis = new Visualization(dataset.data);
-				vis.bounds = bounds();
-				vis.operators.add(new StackedAreaLayout(dataset.columns));
-				vis.data.nodes.visit(function(d:DataSprite):void {
-					d.fillColor = Colors.hsv(Math.random(), 1,1);
-					d.fillAlpha = 1;
-					d.lineAlpha = 0;
-					d.shape = Shapes.POLYGON;
-				});
-				vis.update();
+				vis = buildGraph(dataset);
 				background = new Sprite();
 				background.graphics.beginFill(BACKGROUND_COLOR);
 				background.graphics.drawRect(0,0,1,1);
@@ -48,6 +42,21 @@
 				// add mask to hide animating labels
 				vis.xyAxes.addChild(labelMask);
 				vis.xyAxes.yAxis.labels.mask = labelMask;
+			}
+			
+			private function buildGraph(dataset:Object):Visualization
+			{
+				var _vis:Visualization = new Visualization(dataset.data);
+				_vis.bounds = bounds();
+				_vis.operators.add(new StackedAreaLayout(dataset.columns));
+				_vis.data.nodes.visit(function(d:DataSprite):void {
+					d.fillColor = Colors.hsv(Math.random(), 1,1);
+					d.fillAlpha = 1;
+					d.lineAlpha = 0;
+					d.shape = Shapes.POLYGON;
+				});
+				_vis.update();
+				return _vis;
 			}
 			
 			public static function getData(N:int):Object
@@ -61,9 +70,9 @@
 					var j:uint = 0, s:Number;
 					for each (col in cols) {
 						s = 1 + int((j++)/2);
-						if(i+col%4==0)
-							d.data[col] = 0;
-						else
+						if(i+col%4!=0)
+//							d.data[col] = 0;
+//						else
 							d.data[col] = s*Math.random();
 					}
 				}
@@ -110,6 +119,23 @@
 			{
 				_paddingRight = value;
 				if(vis) vis.update();
+			}
+			
+			public function markDataUpdated():void
+			{
+//				vis.data = this.data;
+//				(StackedAreaLayout(vis.operators.first)).columns = columns;
+//				vis.data.nodes.visit(function(d:DataSprite):void {
+//					d.fillColor = Colors.hsv(Math.random(), 1,1);
+//					d.fillAlpha = 1;
+//					d.lineAlpha = 0;
+//					d.shape = Shapes.POLYGON;
+//				});
+//				vis.update();
+				removeChild(vis);
+				var dataset:Object = {data:this.data, columns:this.columns};
+				vis = buildGraph(dataset);
+				addChild(vis);
 			}
 			
 		]]>

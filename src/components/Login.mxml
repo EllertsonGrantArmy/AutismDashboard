@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" creationComplete="init()"
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="431" height="200">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import db.DBLogin;
+			
+			import mx.controls.Alert;
+			
+			import pd.CustomEvent;
+			
+			private var dbLogin:DBLogin = new DBLogin();
+			//private var dbChild:DBChild = new DBChild();
+			
+			//private var child:Child;
+			
+			private function init():void {
+				
+				/*(4, 'mDaft1337')
+				(3, 'cHamu1337')
+				(2, 'mThiel1337')
+				(4, 'bGrant1234')
+				(3, 'rmuel1337')*/
+				
+				txtUsername.text = "John";
+				txtPassword.text = "noob";
+				
+				this.addEventListener(KeyboardEvent.KEY_DOWN, keyboardEventHandler);
+			}
+			
+			public function loginBtn_clickHandler(event:MouseEvent):void {
+				if(txtUsername.text == "" || txtPassword.text == "") {
+					Alert.show("You must enter a username and password");
+				}else {
+					
+					var username:String = txtUsername.text;
+					var password:String = txtPassword.text;
+					
+					dbLogin.masterLogin(username, password);
+					dbLogin.addEventListener("masterLoginEvent", masterLoginHandler);
+				}
+			}
+			
+			protected function masterLoginHandler(e:CustomEvent):void {
+
+				var dataObj:Object = new Object();
+				
+				if(e.data.valid) { //valid login
+					dataObj.access = e.data.access;
+					dataObj.children = e.data.children;
+					
+					//Dispatch Event to Main application - only dispatch when valid
+					this.dispatchEvent(new CustomEvent("LoginEvent", dataObj));
+				}else { //invalid login
+					Alert.show("Invalid Login");
+					//txtUsername.text = "";
+					//txtPassword.text = "";
+				}
+			}
+			
+			protected function keyboardEventHandler(e:KeyboardEvent):void {
+				if(e.keyCode == 13) { //user hits the enter key
+					loginBtn_clickHandler(new MouseEvent(MouseEvent.CLICK));
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<s:Rect width="100%" height="100%">
+		<s:fill>
+			<s:SolidColor color="0xFFFFFF"/>
+		</s:fill>
+	</s:Rect>
+	
+	<s:Label x="26" y="43" height="35" fontSize="20"
+			 text="Username" textAlign="right" verticalAlign="middle"/>
+	
+	<s:TextInput id="txtUsername" x="155" y="43" width="250" height="35" fontSize="20"/>
+	
+	<s:Spacer x="0" y="78" width="429" height="10"/>
+	
+	<s:Label x="31" y="88" height="35" fontSize="20"
+			 text="Password" textAlign="right" verticalAlign="middle"/>
+	<s:TextInput id="txtPassword" x="155" y="88" width="250" height="35"
+				 displayAsPassword="true" fontSize="20"/>
+	
+	<s:Spacer x="0" y="123" width="429" height="10"/>
+	
+	<s:Button id="loginBtn" x="230" y="131" width="87" height="37" label="Login"
+			  click="loginBtn_clickHandler(event)" fontSize="15" skinClass="resources.skins.btn_skin"/>
+</s:Group>
